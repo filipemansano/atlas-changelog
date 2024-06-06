@@ -62,6 +62,7 @@
             }
 
             btn.setAttribute('disabled', 'disabled');
+            document.getElementById('response').innerHTML = 'Loading ...';
             fetch('https://jbgkt6hkje.execute-api.us-east-1.amazonaws.com/Prod/search ', {
                 method: 'POST',
                 headers: {
@@ -71,7 +72,7 @@
             })
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById('response').innerHTML = `<pre>${data.response}</pre>`;
+                    document.getElementById('response').innerHTML = data.response;
                 })
                 .catch(error => {
                     console.error('Error:', error);

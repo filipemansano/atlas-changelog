@@ -5,8 +5,14 @@ Description: >-
 Transform:
 - AWS::Serverless-2016-10-31
 
+Globals:
+  Api:
+    Cors:
+      AllowMethods: "'POST,OPTIONS'"
+      AllowHeaders: "'content-type'"
+      AllowOrigin: "'*'"
+      
 Resources:
-
   DependenciesLayers:
     Type: AWS::Serverless::LayerVersion
     Properties:

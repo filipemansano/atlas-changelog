@@ -6,6 +6,12 @@ const collection = mongodb.db("changelog").collection("embeddings");
 const validLanguages = ['pt-br', 'es-es', 'en-us'];
 const validProducts = ['atlas', 'search', 'vectorSearch', 'dataFederation', 'appServices'];
 
+const responseHeaders = {
+    "Access-Control-Allow-Headers" : "Content-Type",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "OPTIONS,POST"
+}
+
 export async function httpHandler(event) {
 
     const { text, language, product } = JSON.parse(event.body);
@@ -13,6 +19,7 @@ export async function httpHandler(event) {
     if (!validLanguages.includes(language)) {
         return {
             statusCode: 400,
+            headers: responseHeaders,
             body: JSON.stringify({ error: 'Invalid language' })
         };
     }
@@ -20,6 +27,7 @@ export async function httpHandler(event) {
     if (!validProducts.includes(product)) {
         return {
             statusCode: 400,
+            headers: responseHeaders,
             body: JSON.stringify({ error: 'Invalid product' })
         };
     }
@@ -27,6 +35,7 @@ export async function httpHandler(event) {
     if (!text || text.trim() === '') {
         return {
             statusCode: 400,
+            headers: responseHeaders,
             body: JSON.stringify({ error: 'Invalid question' })
         };
     }
@@ -69,6 +78,7 @@ export async function httpHandler(event) {
 
     return {
         statusCode: 200,
+        headers: responseHeaders,
         body: JSON.stringify({ response })
     };
 }
