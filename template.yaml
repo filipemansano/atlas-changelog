@@ -44,4 +44,4 @@ Resources:
           Properties:
             Schedule: cron(0 11 * * ? *)
       MemorySize: 128
-      Timeout: 30
+      Timeout: 120

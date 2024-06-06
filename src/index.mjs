@@ -128,7 +128,7 @@ const options = {
     projection: { _id: 0, date: 1 },
 };
 
-async function scheduledEventHandler(event) {
+export async function scheduledEventHandler(event) {
     for (let product of products){
 
         const collection = mongodb.db("changelog").collection(product.collection);
@@ -148,14 +148,14 @@ async function scheduledEventHandler(event) {
                         changes: change
                     });
 
-                    //telegramPromises.push(sendMessage(product.name, dates.date, change))
+                    telegramPromises.push(sendMessage(product.name, dates.date, change))
                 }
             }
         }
 
         if(records.length > 0){
             console.log(`Inserting ${records.length} records`);
-            //await Promise.all(telegramPromises);
+            await Promise.all(telegramPromises);
             await collection.insertMany(records);
         }
 
