@@ -49,7 +49,7 @@ export async function httpHandler(event) {
                 path: "embeddings",
                 numCandidates: 10,
                 index: "changelog_vector_index",
-                limit: 3,
+                limit: 10,
                 filter: {
                     product: product,
                 }
@@ -69,7 +69,7 @@ export async function httpHandler(event) {
         {
             "$project": {
                 _id: 0,
-                changes: 1
+                "changes": "$changes.changes"
             }
         }
     ]).toArray();
