@@ -1,0 +1,47 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  mdb-changelog-update
+
+Transform:
+- AWS::Serverless-2016-10-31
+
+Resources:
+
+  DependenciesLayers:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: nodejs-atlas-changelog
+      Description: node modules with all dependencies
+      ContentUri: "./layers"
+      CompatibleRuntimes:
+        - nodejs18.x
+      LicenseInfo: 'MIT'
+      RetentionPolicy: Retain
+    Metadata:
+      BuildMethod: nodejs18.x
+
+  AtlasChangelogWatchFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: A Lambda function to watch Atlas changelogs
+      Layers:
+       - !Ref DependenciesLayers
+      Environment:
+        Variables:
+          TELEGRAM_TOKEN: "{{resolve:secretsmanager:mdb/changelog:SecretString:telegramToken}}"
+          CHAT_ID: "{{resolve:secretsmanager:mdb/changelog:SecretString:chatId}}"
+          MONGO_USERNAME: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoUsername}}"
+          MONGO_PASSWORD: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoPassword}}"
+          MONGO_CLUSTER: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoCluster}}"
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      CodeUri: "src"
+      Handler: index.scheduledEventHandler
+      Events:
+        CloudWatchEvent:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 11 * * ? *)
+      MemorySize: 128
+      Timeout: 30

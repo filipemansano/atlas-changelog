@@ -1,0 +1,13 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@xmldom/xmldom": "^0.8.10",
+    "axios": "^1.7.2",
+    "mongodb": "^6.7.0",
+    "xpath": "^0.0.34"
+  },
+  "scripts": {
+    "generate:layers": "cp package.json ./layers/nodejs && npm install --prefix=./layers/nodejs --omit=dev",
+    "deploy": "sam deploy"
+  }
+}
