@@ -3,6 +3,8 @@ import xpath from "xpath";
 import { DOMParser } from "@xmldom/xmldom";
 import { client as mongodb } from "./mongodb.mjs";
 import { sendMessage } from "./telegram.mjs";
+import { UUID } from "bson";
+import { SQS } from "@aws-sdk/client-sqs";
 
 const products = [
     {
@@ -121,7 +123,8 @@ async function getChangelog(date, url){
     }).filter(Boolean);
 }
 
-
+const sqs = new SQS({ region: "us-east-1" });
+const db = mongodb.db("changelog");
 const start = new Date('2000-01-01');
 const options = {
     sort: { date: -1 },
@@ -131,7 +134,7 @@ const options = {
 export async function scheduledEventHandler(event) {
     for (let product of products){
 
-        const collection = mongodb.db("changelog").collection(product.collection);
+        const collection = db.collection(product.collection);
         const lastChange = await collection.findOne({}, options);
         const lastDate = lastChange ? lastChange.date : start;
 
@@ -143,7 +146,9 @@ export async function scheduledEventHandler(event) {
         for (let releases of changelog){
             for (let dates of releases.dates){
                 for (let change of dates.changes){
+
                     records.push({
+                        _id: new UUID(),
                         date: dates.date,
                         changes: change
                     });
@@ -155,13 +160,28 @@ export async function scheduledEventHandler(event) {
 
         if(records.length > 0){
             console.log(`Inserting ${records.length} records`);
+
+            // wait for all telegram messages to be sent before inserting records
             await Promise.all(telegramPromises);
+
+            // wait for all records to be inserted before sending messages to SQS
             await collection.insertMany(records);
+
+            const messages = records.map(record => sqs.sendMessage({
+                QueueUrl: process.env.SQS_URL,
+                MessageBody: JSON.stringify({
+                    id: record._id,
+                    product: product.collection,
+                    change: record.changes
+                })
+            }));
+
+            await Promise.all(messages);
         }
 
         console.log(`Finished processing ${product.collection}`);
     }
 
-    await mongodb.close();
+    //await mongodb.close();
     console.log('Processing completed');
 };

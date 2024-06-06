@@ -20,9 +20,23 @@ Resources:
     Metadata:
       BuildMethod: nodejs18.x
 
+  AtlasChangelogDeadLetterQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: AtlasChangelogDeadLetterQueue
+
+  AtlasChangelogQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: AtlasChangelog
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt AtlasChangelogDeadLetterQueue.Arn
+        maxReceiveCount: 1
+
   AtlasChangelogWatchFunction:
     Type: AWS::Serverless::Function
     Properties:
+      FunctionName: AtlasChangelogWatchFunction
       Description: A Lambda function to watch Atlas changelogs
       Layers:
        - !Ref DependenciesLayers
@@ -33,11 +47,18 @@ Resources:
           MONGO_USERNAME: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoUsername}}"
           MONGO_PASSWORD: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoPassword}}"
           MONGO_CLUSTER: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoCluster}}"
+          SQS_URL: !GetAtt AtlasChangelogQueue.QueueUrl
       Runtime: nodejs18.x
       Architectures:
         - x86_64
       CodeUri: "src"
       Handler: index.scheduledEventHandler
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            Effect: Allow
+            Action: sqs:SendMessage
+            Resource: !GetAtt AtlasChangelogQueue.Arn
       Events:
         CloudWatchEvent:
           Type: Schedule
@@ -45,3 +66,35 @@ Resources:
             Schedule: cron(0 11 * * ? *)
       MemorySize: 128
       Timeout: 120
+  
+  AtlasChangelogEmbeddingsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: AtlasChangelogEmbeddingsFunction
+      Description: A Lambda function to create the vector embeddings
+      Layers:
+       - !Ref DependenciesLayers
+      Environment:
+        Variables:
+          OPENAI_API_KEY: "{{resolve:secretsmanager:mdb/changelog:SecretString:openaiApiKey}}"
+          MONGO_USERNAME: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoUsername}}"
+          MONGO_PASSWORD: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoPassword}}"
+          MONGO_CLUSTER: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoCluster}}"
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      CodeUri: "src"
+      Handler: embeddings.queueEventHandler
+      Timeout: 30
+      Policies:
+        - AWSLambdaBasicExecutionRole
+        - Statement:
+            Effect: Allow
+            Action: sqs:ReceiveMessage
+            Resource: !GetAtt AtlasChangelogQueue.Arn
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt AtlasChangelogQueue.Arn
+            BatchSize: 10
