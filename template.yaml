@@ -98,3 +98,34 @@ Resources:
           Properties:
             Queue: !GetAtt AtlasChangelogQueue.Arn
             BatchSize: 10
+  
+  AtlasChangelogQuestionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: AtlasChangelogQuestionFunction
+      Description: A Lambda function to respond to questions
+      Layers:
+       - !Ref DependenciesLayers
+      Environment:
+        Variables:
+          OPENAI_API_KEY: "{{resolve:secretsmanager:mdb/changelog:SecretString:openaiApiKey}}"
+          MONGO_USERNAME: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoUsername}}"
+          MONGO_PASSWORD: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoPassword}}"
+          MONGO_CLUSTER: "{{resolve:secretsmanager:mdb/changelog:SecretString:mongoCluster}}"
+      Runtime: nodejs18.x
+      Architectures:
+        - x86_64
+      CodeUri: "src"
+      Handler: search.httpHandler
+      Timeout: 30
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /search
+            Method: POST
+
+Outputs:
+  AtlasChangelogQuestionEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/search"

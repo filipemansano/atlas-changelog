@@ -1,28 +1,6 @@
-import axios from 'axios';
 import { client as mongodb } from "./mongodb.mjs";
-const API_KEY = process.env.OPENAI_API_KEY;
+import { generateEmbeddings } from './openai.mjs';
 import { UUID } from "bson";
-
-async function generateEmbeddings(inputText) {
-    const url = 'https://api.openai.com/v1/embeddings';
-    
-    const headers = {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
-    };
-
-    const data = {
-        model: 'text-embedding-ada-002',
-        input: inputText
-    };
-
-    try {
-        const response = await axios.post(url, data, { headers });
-        return response.data;
-    } catch (error) {
-        throw error;
-    }
-}
 
 const collection = mongodb.db("changelog").collection("embeddings");
 export async function queueEventHandler(sqsEvent) {
