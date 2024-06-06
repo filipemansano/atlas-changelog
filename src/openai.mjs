@@ -30,13 +30,12 @@ export async function completions(product, question, context, language) {
         'Authorization': `Bearer ${API_KEY}`
     };
 
-    const productName = product === 'atlas' ? "MongoDB Atlas Platform" : `MongoDB Atlas ${product}`;
     const data = {
         model: "gpt-3.5-turbo",
         messages: [
             {
               "role": "system",
-              "content": `You are a helpful assistant that will answer the question about the ${productName} changelogs in ${language}, for answer the question use the following changelogs\n${context.join('\n\n')}. remember to always respond in ${language} and be as clear as possible.`
+              "content": `You are a helpful assistant that will answer the question about the ${product} changelogs in ${language}, for answer the question use the following changelogs\n${context.join('\n\n')}. remember to always respond in ${language} and be as clear as possible.`
             },
             {
               "role": "user",

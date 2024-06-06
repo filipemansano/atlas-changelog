@@ -4,7 +4,14 @@ import { generateEmbeddings, completions } from './openai.mjs';
 const collection = mongodb.db("changelog").collection("embeddings");
 
 const validLanguages = ['pt-br', 'es-es', 'en-us'];
-const validProducts = ['atlas', 'search', 'vectorSearch', 'dataFederation', 'appServices'];
+
+const validProducts = {
+    'atlas': 'MongoDB Atlas Platform', 
+    'search': 'MongoDB Atlas Search', 
+    'vectorSearch': 'MongoDB Atlas Vector Search', 
+    'dataFederation': 'MongoDB Atlas Data Federation', 
+    'appServices': 'MongoDB Atlas App Services'
+};
 
 const responseHeaders = {
     "Access-Control-Allow-Headers" : "Content-Type",
@@ -24,7 +31,7 @@ export async function httpHandler(event) {
         };
     }
 
-    if (!validProducts.includes(product)) {
+    if (!Object.keys(validProducts).includes(product)) {
         return {
             statusCode: 400,
             headers: responseHeaders,
@@ -74,7 +81,7 @@ export async function httpHandler(event) {
         }
     ]).toArray();
 
-    const response = await completions(product, text, changes.map(item => item.changes), language);
+    const response = await completions(validProducts[product], text, changes.map(item => item.changes), language);
 
     return {
         statusCode: 200,
