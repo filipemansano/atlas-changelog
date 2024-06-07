@@ -1,6 +1,11 @@
 import axios from 'axios';
 const API_KEY = process.env.OPENAI_API_KEY;
 
+/**
+ * OpenAI API Pricing
+ * text-embedding-ada-002
+ *  - $0.0001 per 1,000 input tokens
+ */
 export async function generateEmbeddings(inputText) {
     const url = 'https://api.openai.com/v1/embeddings';
     
@@ -22,6 +27,12 @@ export async function generateEmbeddings(inputText) {
     }
 }
 
+/**
+ * OpenAI API Pricing
+ * gpt-3.5-turbo
+ *  - $0.0005 per 1,000 input tokens
+ *  - $0.0015 per 1,000 output tokens
+ */
 export async function completions(product, question, context, language) {
     const url = 'https://api.openai.com/v1/chat/completions';
     
