@@ -12,6 +12,7 @@
     "deploy": "sam deploy"
   },
   "devDependencies": {
-    "@aws-sdk/client-sqs": "^3.590.0"
+    "@aws-sdk/client-sqs": "^3.590.0",
+    "@aws-sdk/client-bedrock-runtime": "^3.592.0"
   }
 }
